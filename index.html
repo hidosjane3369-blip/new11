@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>网络暴力心理健康课 - 隐性攻击模拟</title>
+<style>
+  body { 
+    margin: 0; 
+    padding: 0; 
+    background-color: #111; 
+    font-family: "Microsoft YaHei", sans-serif; 
+    overflow: hidden; 
+  }
+  
+  #danmu-container { 
+    position: relative; 
+    width: 100vw; 
+    height: 85vh; 
+    background-image: linear-gradient(to bottom, #1a1a1a, #000);
+    overflow: hidden; 
+    border-bottom: 2px solid #333;
+  }
+  
+  .danmu-item { 
+    position: absolute; 
+    white-space: nowrap; 
+    font-weight: bold; 
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8); 
+    animation: move linear forwards; 
+    opacity: 0.9;
+  }
+  
+  @keyframes move { 
+    from { left: 100%; } 
+    to { left: -100%; } 
+  }
+  
+  #controls { 
+    height: 15vh; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 40px; 
+    background-color: #222; 
+  }
+  
+  button { 
+    padding: 15px 50px; 
+    font-size: 22px; 
+    font-weight: bold;
+    cursor: pointer; 
+    border: none; 
+    border-radius: 8px; 
+    color: white; 
+    transition: 0.2s; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+  button:active { transform: scale(0.95); }
+  
+  #btn-start { background-color: #1976D2; } 
+  #btn-start:hover { background-color: #1565C0; }
+  
+  #btn-stop { background-color: #757575; }
+  #btn-stop:hover { background-color: #616161; }
+
+  .hurtful { 
+    color: #ff5252 !important; 
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+  <div id="danmu-container"></div>
+  
+  <div id="controls">
+    <button id="btn-start">▶ 开始播放弹幕</button>
+    <button id="btn-stop">⏹ 清屏/暂停</button>
+  </div>
+
+  <script>
+    const container = document.getElementById('danmu-container');
+    let danmuInterval;
+
+    // 分离词库，方便控制比例
+    const normalComments = [
+      "继续做自己", "你这个角度挺特别", "有被打动到", "分享得很好呀", 
+      "很高兴看到你发这个", "谢谢你愿意展示自己", "这样表达挺好的", 
+      "我觉得你在认真做自己", "可以继续更新", "你其实挺棒的", 
+      "这个内容我愿意看", "有自己的风格", "这条视频挺真实的", 
+      "你愿意发出来就很了不起", "我觉得你在进步"
+    ];
+      
+    const hurtComments = [
+      "这也敢发？", "有点尴尬吧", "你自己看了不会觉得怪吗", "额……", 
+      "我有点看不下去", "这真的有必要发吗", "你不觉得有点装吗", 
+      "怎么说呢，有点怪", "好像有点刻意", "这风格我真接受不了", 
+      "你是不是太想被看见了", "感觉有点用力过猛", "不知道在表达什么", 
+      "说实话有点尬", "你自己满意吗", "我替你觉得尴尬", 
+      "这个发出来图什么", "赶紧删了吧", "没人想看", 
+      "你不觉得丢人吗", "大家都在看笑话", "还是别发了", 
+      "你这样真的很尴尬", "不如别说了", "你不会当真觉得自己很好吧", 
+      "发出来干吗", "快点删掉"
+    ];
+
+    const colors = ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFD700', '#87CEFA', '#98FB98']; 
+
+    function createDanmu(text, type) {
+      const danmu = document.createElement('div');
+      danmu.className = 'danmu-item';
+      danmu.innerText = text;
+
+      const isHurtful = type === 'hurt';
+
+      if (isHurtful) {
+        danmu.classList.add('hurtful');
+      } else {
+        danmu.style.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      // 随机垂直位置 (5% - 85%)
+      const top = Math.random() * 80 + 5;
+      danmu.style.top = top + '%';
+
+      // 随机字体大小
+      const baseSize = isHurtful ? 28 : 24;
+      const fontSize = Math.random() * 12 + baseSize; 
+      danmu.style.fontSize = fontSize + 'px';
+
+      // 【已调慢速度】伤人弹幕 10-13秒飞过，文明弹幕 12-16秒飞过
+      const duration = isHurtful ? (Math.random() * 3 + 10) : (Math.random() * 4 + 12);
+      danmu.style.animationDuration = duration + 's';
+
+      danmu.addEventListener('animationend', () => {
+        danmu.remove();
+      });
+
+      container.appendChild(danmu);
+    }
+
+    function startDanmu() {
+      clearInterval(danmuInterval); 
+      
+      // 每 600 毫秒生成一条新弹幕
+      danmuInterval = setInterval(() => {
+        // 【核心修改】80% 的概率强行抽取负面评论，20% 抽取正面评论
+        const isHurt = Math.random() < 0.8; 
+        
+        let text;
+        if (isHurt) {
+          text = hurtComments[Math.floor(Math.random() * hurtComments.length)];
+        } else {
+          text = normalComments[Math.floor(Math.random() * normalComments.length)];
+        }
+        
+        createDanmu(text, isHurt ? 'hurt' : 'normal');
+      }, 600); 
+    }
+
+    // 绑定按钮事件
+    document.getElementById('btn-start').addEventListener('click', startDanmu);
+    document.getElementById('btn-stop').addEventListener('click', () => {
+      clearInterval(danmuInterval);
+      container.innerHTML = ''; // 清屏
+    });
+  </script>
+</body>
+</html>
